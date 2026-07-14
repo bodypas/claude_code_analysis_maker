@@ -24,7 +24,11 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/analytics
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
     depends_on:
       db:
         condition: service_healthy
@@ -35,7 +39,11 @@ services:
   #     dockerfile: Dockerfile
   #   command: ["python", "-m", "src.tools.seed_db"]
   #   environment:
-  #     - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/analytics
+  #     - DB_USER=${DB_USER}
+  #     - DB_PASSWORD=${DB_PASSWORD}
+  #     - DB_HOST=${DB_HOST}
+  #     - DB_PORT=${DB_PORT}
+  #     - DB_NAME=${DB_NAME}
   #   depends_on:
   #     db:
   #       condition: service_healthy
@@ -47,7 +55,7 @@ services:
     ports:
       - "8501:8501"
     environment:
-      - API_BASE_URL=http://api:8000/api/v1
+      - API_BASE_URL=${API_BASE_URL}
     depends_on:
       - api
 
