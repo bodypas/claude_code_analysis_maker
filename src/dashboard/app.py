@@ -5,6 +5,7 @@ import plotly.express as px
 import httpx
 import pandas as pd
 import os
+import asyncio
 from loguru import logger
 
 # Configuration for reaching the FastAPI backend
@@ -24,6 +25,16 @@ def fetch_data(endpoint: str, params: dict = None) -> list:
         logger.error(f"API Error fetching {endpoint}: {e}")
         return []
 
+async def fetch_data_async(client, endpoint: str, params: dict = None) -> list:
+    """Fetches data from the FastAPI backend asynchronously."""
+    try:
+        response = await client.get(f"{API_BASE_URL}/{endpoint}", params=params, timeout=10.0, follow_redirects=True)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        logger.error(f"API Error fetching {endpoint}: {e}")
+        return []
+
 # Layout
 app.layout = dbc.Container([
     dcc.Location(id='url', refresh=False),
@@ -31,6 +42,7 @@ app.layout = dbc.Container([
         children=[
             dbc.NavItem(dbc.NavLink("Employees", href="/employees")),
             dbc.NavItem(dbc.NavLink("Telemetry", href="/telemetry")),
+            dbc.NavItem(dbc.NavLink("AI Report", href="/ai-report")),
         ],
         brand="Claude Code Analytics Platform",
         color="dark",
@@ -44,8 +56,43 @@ app.layout = dbc.Container([
 def display_page(pathname):
     if pathname == '/telemetry':
         return render_telemetry_dashboard()
+    elif pathname == '/ai-report':
+        return render_ai_report_page()
     else:
         return render_employees_dashboard()
+
+def render_ai_report_page():
+    return dbc.Container([
+        html.H2("🤖 AI Insights Report", className="mb-4"),
+        dbc.Button("Generate AI Summary", id="generate-summary-btn", color="primary", className="mb-3"),
+        dbc.Card([
+            dbc.CardHeader("AI Insights"),
+            dbc.CardBody(
+                dcc.Loading(
+                    dcc.Markdown(id="ai-summary-output", children="Click the button to generate a summary...")
+                )
+            )
+        ])
+    ], fluid=True)
+
+@callback(
+    Output('ai-summary-output', 'children'),
+    [Input('generate-summary-btn', 'n_clicks')]
+)
+def update_ai_report(n_clicks):
+    if not n_clicks:
+        return "Click the button to generate a summary..."
+    
+    # Use synchronous call for simplicity in callback, or wrap in a thread/async
+    try:
+        response = httpx.get(f"{API_BASE_URL}/ai/telemetry-summary", timeout=60.0)
+        if response.status_code == 200:
+            return response.json().get("summary", "No summary generated.")
+        else:
+            return f"Error generating AI summary: {response.status_code}"
+    except Exception as e:
+        logger.error(f"Error fetching AI summary: {e}")
+        return "Error generating AI summary."
 
 def render_employees_dashboard():
     return dbc.Container([
@@ -84,21 +131,23 @@ def render_employees_dashboard():
         
         # Charts Row
         dbc.Row([
-            dbc.Col(dbc.Card([dbc.CardHeader("Distribution by Level"), dbc.CardBody(dcc.Graph(id='level-chart'))]), width=4),
-            dbc.Col(dbc.Card([dbc.CardHeader("Distribution by Location"), dbc.CardBody(dcc.Graph(id='location-chart'))]), width=4),
-            dbc.Col(dbc.Card([dbc.CardHeader("Distribution by Practice"), dbc.CardBody(dcc.Graph(id='practice-chart'))]), width=4),
+            dbc.Col(dbc.Card([dbc.CardHeader("Distribution by Level"), dbc.CardBody(dcc.Loading(dcc.Graph(id='level-chart')))]), width=4),
+            dbc.Col(dbc.Card([dbc.CardHeader("Distribution by Location"), dbc.CardBody(dcc.Loading(dcc.Graph(id='location-chart')))]), width=4),
+            dbc.Col(dbc.Card([dbc.CardHeader("Distribution by Practice"), dbc.CardBody(dcc.Loading(dcc.Graph(id='practice-chart')))]), width=4),
         ], className="mb-4"),
         
         # Data Table Card
         dbc.Card([
             dbc.CardHeader("Employee Records"),
             dbc.CardBody(
-                dash_table.DataTable(
-                    id='employee-table', 
-                    page_size=10, 
-                    style_table={'overflowX': 'auto'},
-                    style_cell={'backgroundColor': '#222', 'color': '#fff', 'border': '1px solid #444'},
-                    style_header={'backgroundColor': '#333', 'color': '#fff', 'fontWeight': 'bold'}
+                dcc.Loading(
+                    dash_table.DataTable(
+                        id='employee-table', 
+                        page_size=10, 
+                        style_table={'overflowX': 'auto'},
+                        style_cell={'backgroundColor': '#222', 'color': '#fff', 'border': '1px solid #444'},
+                        style_header={'backgroundColor': '#333', 'color': '#fff', 'fontWeight': 'bold'}
+                    )
                 )
             )
         ])
@@ -174,32 +223,34 @@ def render_telemetry_dashboard():
     return dbc.Container([
         html.H2("📡 Telemetry Analytics", className="mb-4"),
         
-        # KPI Cards (Usage Overview)
-        dbc.Row(id="telemetry-kpis", className="mb-4"),
-        
-        # Activity Chart
-        dbc.Row([
-            dbc.Col(dbc.Card([dbc.CardHeader("Activity Over Time"), dbc.CardBody(dcc.Graph(id='telemetry-activity-chart'))]), width=12),
-        ], className="mb-4"),
-        
-        # Other Analytics
-        dbc.Row([
-            dbc.Col(dbc.Card([dbc.CardHeader("Cost by Model"), dbc.CardBody(dcc.Graph(id='telemetry-cost-chart'))]), width=6),
-            dbc.Col(dbc.Card([dbc.CardHeader("Token Usage by Model"), dbc.CardBody(dcc.Graph(id='telemetry-token-chart'))]), width=6),
-        ], className="mb-4"),
-        dbc.Row([
-            dbc.Col(dbc.Card([dbc.CardHeader("Tool Usage"), dbc.CardBody(dcc.Graph(id='telemetry-tool-chart'))]), width=12),
-        ], className="mb-4"),
-        
-        # New Event Distribution Row
-        dbc.Row([
-            dbc.Col(dbc.Card([dbc.CardHeader("Event Type Distribution"), dbc.CardBody(dcc.Graph(id='telemetry-event-dist-chart'))]), width=6),
-            dbc.Col(dbc.Card([dbc.CardHeader("Terminal Breakdown"), dbc.CardBody(dcc.Graph(id='telemetry-terminal-chart'))]), width=6),
-        ], className="mb-4"),
-        
-        # Data Tables
-        dbc.Row([
-            dbc.Col(dbc.Card([dbc.CardHeader("Error Analysis"), dbc.CardBody(dcc.Graph(id='error-analysis-chart'))]), width=12),
+        dcc.Loading([
+            # KPI Cards (Usage Overview)
+            dbc.Row(id="telemetry-kpis", className="mb-4"),
+            
+            # Activity Chart
+            dbc.Row([
+                dbc.Col(dbc.Card([dbc.CardHeader("Activity Over Time"), dbc.CardBody(dcc.Graph(id='telemetry-activity-chart'))]), width=12),
+            ], className="mb-4"),
+            
+            # Other Analytics
+            dbc.Row([
+                dbc.Col(dbc.Card([dbc.CardHeader("Cost by Model"), dbc.CardBody(dcc.Graph(id='telemetry-cost-chart'))]), width=6),
+                dbc.Col(dbc.Card([dbc.CardHeader("Token Usage by Model"), dbc.CardBody(dcc.Graph(id='telemetry-token-chart'))]), width=6),
+            ], className="mb-4"),
+            dbc.Row([
+                dbc.Col(dbc.Card([dbc.CardHeader("Tool Usage"), dbc.CardBody(dcc.Graph(id='telemetry-tool-chart'))]), width=12),
+            ], className="mb-4"),
+            
+            # New Event Distribution Row
+            dbc.Row([
+                dbc.Col(dbc.Card([dbc.CardHeader("Event Type Distribution"), dbc.CardBody(dcc.Graph(id='telemetry-event-dist-chart'))]), width=6),
+                dbc.Col(dbc.Card([dbc.CardHeader("Terminal Breakdown"), dbc.CardBody(dcc.Graph(id='telemetry-terminal-chart'))]), width=6),
+            ], className="mb-4"),
+            
+            # Data Tables
+            dbc.Row([
+                dbc.Col(dbc.Card([dbc.CardHeader("Error Analysis"), dbc.CardBody(dcc.Graph(id='error-analysis-chart'))]), width=12),
+            ])
         ])
     ], fluid=True)
 
@@ -215,14 +266,23 @@ def render_telemetry_dashboard():
     [Input('url', 'pathname')]
 )
 def update_telemetry_dashboard(_):
-    # Fetch data from new endpoints
-    overview = fetch_data("telemetry/usage-overview")
-    activity = fetch_data("telemetry/activity-over-time")
-    cost = fetch_data("telemetry/cost-breakdown")
-    tools = fetch_data("telemetry/tool-usage")
-    event_dist = fetch_data("telemetry/event-type-distribution")
-    terminal_breakdown = fetch_data("telemetry/terminal-breakdown")
-    errors = fetch_data("telemetry/error-analysis")
+    # Fetch data in parallel
+    return asyncio.run(update_telemetry_dashboard_async())
+
+async def update_telemetry_dashboard_async():
+    async with httpx.AsyncClient() as client:
+        # Fetch data from new endpoints in parallel
+        results = await asyncio.gather(
+            fetch_data_async(client, "telemetry/usage-overview"),
+            fetch_data_async(client, "telemetry/activity-over-time"),
+            fetch_data_async(client, "telemetry/cost-breakdown"),
+            fetch_data_async(client, "telemetry/tool-usage"),
+            fetch_data_async(client, "telemetry/event-type-distribution"),
+            fetch_data_async(client, "telemetry/terminal-breakdown"),
+            fetch_data_async(client, "telemetry/error-analysis")
+        )
+        
+        overview, activity, cost, tools, event_dist, terminal_breakdown, errors = results
     
     # ... KPI Cards ...
     kpis = [
@@ -278,5 +338,6 @@ def update_telemetry_dashboard(_):
         error_fig = px.bar(df_errors, x='model', y='count', color='error', title="Error Analysis", template='plotly_dark', labels={'model': 'Model', 'count': 'Error Count', 'error': 'Error Message'})
 
     return kpis, activity_fig, cost_fig, token_fig, tool_fig, dist_fig, term_fig, error_fig
+
 if __name__ == "__main__":
     app.run(debug=True, port=8501, host="0.0.0.0")
