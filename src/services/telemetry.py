@@ -27,54 +27,6 @@ class TelemetryService:
     def __init__(self, session: AsyncSession):
         self.repository = TelemetryRepository(session)
 
-    async def get_telemetry_logs(self, skip: int = 0, limit: int = 100) -> Sequence[TelemetryLog]:
-        """Retrieves telemetry logs via the repository."""
-        return await self.repository.get_all(skip=skip, limit=limit)
-
-    async def get_telemetry_metrics(
-        self,
-        practices: Optional[List[str]] = None,
-        emails: Optional[List[str]] = None,
-        terminal_types: Optional[List[str]] = None
-    ) -> List[dict]:
-        """Fetches, parses, and filters telemetry metrics using SQL."""
-        raw_logs = await self.repository.get_filtered_metrics(
-            practices=practices,
-            emails=emails,
-            terminal_types=terminal_types
-        )
-        
-        records = []
-        for log in raw_logs:
-            try:
-                attrs = log.attributes or {}
-                records.append({
-                    "event_name": attrs.get("event.name", "unknown"),
-                    "cost_usd": float(attrs.get("cost_usd", 0)),
-                    "input_tokens": int(attrs.get("input_tokens", 0)),
-                    "output_tokens": int(attrs.get("output_tokens", 0)),
-                    "duration_ms": int(attrs.get("duration_ms", 0)),
-                    "success": attrs.get("success", "unknown"),
-                    "tool_name": attrs.get("tool_name", "unknown"),
-                    "practice": attrs.get("user.practice", "unknown"),
-                    "email": log.employee_email,
-                    "terminal_type": attrs.get("terminal.type", "unknown"),
-                    "timestamp": log.timestamp.isoformat() if log.timestamp else None
-                })
-            except Exception as e:
-                logger.warning(f"Error processing log {log.id}: {e}")
-        return records
-
-    async def get_telemetry_stats(self) -> dict:
-        """Retrieves aggregated telemetry stats via the repository."""
-        return await self.repository.get_telemetry_stats()
-
-    async def get_telemetry_metadata(self) -> dict:
-        """Retrieves filter metadata via the repository."""
-        return await self.repository.get_telemetry_metadata()
-
-    # --- Analytics Service Methods ---
-
     async def get_usage_overview(self) -> Dict[str, Any]:
         return await self.repository.get_usage_overview()
 
@@ -95,9 +47,6 @@ class TelemetryService:
 
     async def get_event_type_distribution(self) -> List[Dict[str, Any]]:
         return await self.repository.get_event_type_distribution()
-
-    async def get_employee_activity(self, limit: int) -> List[Dict[str, Any]]:
-        return await self.repository.get_employee_activity(limit)
 
     def _parse_event_base(self, log: TelemetryLog) -> Dict[str, Any]:
         """Parses common event attributes, ensuring timezone-aware timestamps."""

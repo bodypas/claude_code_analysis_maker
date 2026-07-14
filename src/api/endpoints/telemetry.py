@@ -9,16 +9,6 @@ from src.services.telemetry import TelemetryService
 
 router = APIRouter()
 
-@router.get("", response_model=List[TelemetryLogSchema])
-async def list_telemetry_logs(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    service: TelemetryService = Depends(get_telemetry_service)
-):
-    """Retrieve a paginated list of telemetry logs."""
-    logs = await service.get_telemetry_logs(skip=skip, limit=limit)
-    return [TelemetryLogSchema.model_validate(log) for log in logs]
-
 @router.get("/usage-overview")
 async def get_usage_overview(service: TelemetryService = Depends(get_telemetry_service)):
     """Summary of total events and cost."""
@@ -53,11 +43,6 @@ async def get_terminal_breakdown(service: TelemetryService = Depends(get_telemet
 async def get_event_type_distribution(service: TelemetryService = Depends(get_telemetry_service)):
     """Count records across all event tables for distribution analysis."""
     return await service.get_event_type_distribution()
-
-@router.get("/metadata")
-async def get_telemetry_metadata(service: TelemetryService = Depends(get_telemetry_service)):
-    """Retrieve telemetry filter metadata."""
-    return await service.get_telemetry_metadata()
 
 @router.post("/seed")
 async def seed_telemetry(service: TelemetryService = Depends(get_telemetry_service)):
