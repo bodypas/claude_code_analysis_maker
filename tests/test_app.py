@@ -1,4 +1,3 @@
-import pytest
 from src.dashboard.app import display_page
 
 def test_display_page_routing_functionality():

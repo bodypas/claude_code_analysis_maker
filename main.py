@@ -3,8 +3,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from loguru import logger
 
-from src.db.connection import init_db
 from src.api.router import api_router
+from src.db.connection import init_db
 
 
 @asynccontextmanager

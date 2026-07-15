@@ -1,4 +1,5 @@
 from typing import TypeVar, Generic, Sequence, Type
+
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase

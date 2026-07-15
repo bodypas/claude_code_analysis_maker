@@ -1,5 +1,6 @@
 from typing import Optional, Any
-from sqlalchemy import Integer, String, ForeignKey, DateTime
+
+from sqlalchemy import Integer, String, DateTime
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 

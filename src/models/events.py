@@ -1,8 +1,10 @@
 from typing import Optional
+
 from sqlalchemy import Integer, String, ForeignKey, DateTime, Boolean, Float
 from sqlalchemy.orm import Mapped, mapped_column, declarative_mixin
 
 from src.models.base import Base
+
 
 @declarative_mixin
 class EventBase:

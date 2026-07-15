@@ -1,6 +1,5 @@
 from src.models.base import Base
 from src.models.employee import Employee
-from src.models.telemetry import TelemetryLog
 from src.models.events import (
     UserPromptEvent,
     ToolDecisionEvent,
@@ -8,6 +7,7 @@ from src.models.events import (
     ApiRequestEvent,
     ApiErrorEvent,
 )
+from src.models.telemetry import TelemetryLog
 
 __all__ = [
     "Base",

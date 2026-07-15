@@ -1,7 +1,9 @@
 import pytest
 from fastapi.testclient import TestClient
+
 from main import app
 from src.api.dependencies import get_telemetry_service
+
 
 # Mock service
 class MockTelemetryService:

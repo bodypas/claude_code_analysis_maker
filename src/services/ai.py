@@ -1,11 +1,13 @@
 import json
-import os
+
 from fastapi.encoders import jsonable_encoder
 from google import genai
 from loguru import logger
-from src.services.telemetry import TelemetryService
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.core.config import settings
+from src.services.telemetry import TelemetryService
+
 
 class AIService:
     """Service layer handling AI interactions."""

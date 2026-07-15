@@ -2,9 +2,9 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.connection import get_session
+from src.services.ai import AIService
 from src.services.employee import EmployeeService
 from src.services.telemetry import TelemetryService
-from src.services.ai import AIService
 
 
 def get_employee_service(session: AsyncSession = Depends(get_session)) -> EmployeeService:

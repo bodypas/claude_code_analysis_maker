@@ -1,10 +1,8 @@
-from typing import List, Optional, Sequence, Any, Dict
-import sqlalchemy
-from sqlalchemy import select, func, cast, String, Integer, Float, case, desc, Date
+from typing import List, Any, Dict
+
+from sqlalchemy import select, func, cast, Integer, case, Date
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
-from src.models.telemetry import TelemetryLog
 from src.models.events import (
     UserPromptEvent,
     ToolDecisionEvent,
@@ -12,6 +10,7 @@ from src.models.events import (
     ApiRequestEvent,
     ApiErrorEvent,
 )
+from src.models.telemetry import TelemetryLog
 from src.repositories.base import BaseRepository
 
 

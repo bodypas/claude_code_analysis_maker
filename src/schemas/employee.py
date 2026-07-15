@@ -1,5 +1,4 @@
 from src.schemas.base import Base
-from pydantic import ConfigDict
 
 
 class EmployeeSchema(Base):

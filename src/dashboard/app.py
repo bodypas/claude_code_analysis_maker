@@ -1,11 +1,12 @@
+import asyncio
+import os
+
 import dash
-from dash import dcc, html, dash_table, Input, Output, callback
 import dash_bootstrap_components as dbc
-import plotly.express as px
 import httpx
 import pandas as pd
-import os
-import asyncio
+import plotly.express as px
+from dash import dcc, html, dash_table, Input, Output, callback
 from loguru import logger
 
 # Configuration for reaching the FastAPI backend

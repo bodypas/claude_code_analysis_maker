@@ -1,5 +1,6 @@
-from typing import Any, Optional, List
 from datetime import datetime
+from typing import Any, Optional, List
+
 from src.schemas.base import Base
 
 

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+
 from src.api.dependencies import get_ai_service
 from src.services.ai import AIService
 

@@ -1,9 +1,9 @@
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock
+
 from main import app
 from src.api.dependencies import get_ai_service
-from src.services.ai import AIService
+
 
 # Mock service
 class MockAIService:

@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
+from src.api.endpoints.ai import router as ai_router
 from src.api.endpoints.employee import router as employee_router
 from src.api.endpoints.telemetry import router as telemetry_router
-from src.api.endpoints.ai import router as ai_router
 
 api_router = APIRouter()
 

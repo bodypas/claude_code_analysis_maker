@@ -1,14 +1,11 @@
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Sequence, Dict, Set, List, Optional, Callable, Any
+from typing import Dict, List, Callable, Any
 
 from loguru import logger
-from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
-import pandas as pd
 
-from src.models.telemetry import TelemetryLog
 from src.models.events import (
     UserPromptEvent,
     ToolDecisionEvent,
@@ -16,9 +13,9 @@ from src.models.events import (
     ApiRequestEvent,
     ApiErrorEvent,
 )
+from src.models.telemetry import TelemetryLog
 from src.repositories.telemetry import TelemetryRepository
 from src.schemas.telemetry import TelemetryLogSchema
-from src.tools.schema_analyzer import analyze_jsonl_schema
 
 
 class TelemetryService:

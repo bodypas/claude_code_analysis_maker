@@ -1,9 +1,11 @@
+from typing import List
+
 import pytest
 from fastapi.testclient import TestClient
+
 from main import app
 from src.api.dependencies import get_employee_service
-from src.schemas.employee import EmployeeSchema
-from typing import List
+
 
 # Mock service
 class MockEmployeeService:

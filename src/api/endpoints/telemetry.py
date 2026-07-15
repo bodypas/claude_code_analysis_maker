@@ -1,11 +1,9 @@
-from pathlib import Path
-from typing import List, Optional
+from typing import List
 
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends
 
 from src.api.dependencies import get_telemetry_service
 from src.schemas.telemetry import (
-    TelemetryLogSchema,
     UsageOverviewSchema,
     ActivityOverTimeSchema,
     CostBreakdownSchema,
