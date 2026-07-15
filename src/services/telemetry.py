@@ -150,6 +150,7 @@ class TelemetryService:
         logger.info(f"Seeding telemetry from {file_path} in batches of {batch_size}...")
         try:
             batch_logs = []
+            total_processed = 0
             with file_path.open(mode="r", encoding="utf-8") as f:
                 for line_num, line in enumerate(f, start=1):
                     line = line.strip()
@@ -185,9 +186,11 @@ class TelemetryService:
                             
                             # Add to current batch
                             batch_logs.append((db_log, msg))
+                            total_processed += 1
                             
                             # If batch is full, process it
                             if len(batch_logs) >= batch_size:
+                                logger.info(f"Processing batch of {len(batch_logs)}... (Total processed: {total_processed})")
                                 await self._process_batch(batch_logs, dispatch_map)
                                 batch_logs = []
 
@@ -198,9 +201,10 @@ class TelemetryService:
             
             # Process remaining logs
             if batch_logs:
+                logger.info(f"Processing final batch of {len(batch_logs)}... (Total processed: {total_processed})")
                 await self._process_batch(batch_logs, dispatch_map)
 
-            logger.info("Finished seeding telemetry logs.")
+            logger.info(f"Finished seeding {total_processed} telemetry logs.")
         except Exception as e:
             logger.error(f"Failed to read telemetry file {file_path}: {e}")
             raise

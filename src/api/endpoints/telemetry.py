@@ -53,21 +53,3 @@ async def get_event_type_distribution(service: TelemetryService = Depends(get_te
     """Count records across all event tables for distribution analysis."""
     return await service.get_event_type_distribution()
 
-@router.post("/seed")
-async def seed_telemetry(service: TelemetryService = Depends(get_telemetry_service)):
-    """Seed telemetry data into the database."""
-    try:
-        await service.seed_telemetry(Path("data/output/telemetry_logs.jsonl"))
-        return {"message": "Telemetry seeded successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.delete("")
-async def delete_all_telemetry(service: TelemetryService = Depends(get_telemetry_service)):
-    """Delete all telemetry data from the database."""
-    try:
-        await service.delete_all_telemetry()
-        return {"message": "Telemetry deleted successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
