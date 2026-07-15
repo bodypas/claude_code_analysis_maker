@@ -9,7 +9,7 @@ cp .env.example .env
 docker compose up
 ```
 
-**Note:** This is a demo project populated with preseeded data for immediate exploration.
+> **Note:** This is a demo project populated with preseeded data for immediate exploration.
 
 That's it. On first startup, the app automatically:
 *   Creates the database schema.
