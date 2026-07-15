@@ -1,4 +1,4 @@
-# AGENTS.md - Antigravity Workspace Configuration & System Rules
+# GEMINI.md - Antigravity Workspace Configuration & System Rules
 
 This file defines the system constraints, context, and operational rules for the Google Antigravity Agent Harness building the Claude Code Analytics Platform.
 
@@ -16,7 +16,7 @@ All code written or modified across this workspace must strictly conform to this
 * **Logging System:** Loguru (`from loguru import logger`). Standard Python `logging` or bare `print()` statements are strictly forbidden.
 * **Backend Framework:** FastAPI (Python 3.11+) implementing clean REST endpoints.
 * **Data Validation:** Strict Pydantic v2 validation schemas.
-* **Frontend UI:** Streamlit for clean, fast, multi-persona user metrics mapping.
+* **Frontend UI:** Dash for clean, fast, multi-persona user metrics mapping.
 * **Deployment System:** Fully multi-stage containerization using Docker and Docker Compose.
 
 ---
