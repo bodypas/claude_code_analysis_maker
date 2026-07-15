@@ -68,3 +68,13 @@ class TerminalBreakdownSchema(Base):
 class EventDistributionSchema(Base):
     event_type: str
     count: int
+
+
+class TelemetryAggregationSchema(Base):
+    usage_overview: UsageOverviewSchema
+    activity_over_time: List[ActivityOverTimeSchema]
+    cost_breakdown: List[CostBreakdownSchema]
+    tool_usage: ToolUsageSchema
+    error_analysis: List[ErrorAnalysisSchema]
+    terminal_breakdown: List[TerminalBreakdownSchema]
+    event_type_distribution: List[EventDistributionSchema]

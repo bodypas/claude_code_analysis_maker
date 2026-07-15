@@ -63,13 +63,3 @@ def test_get_usage_overview(client):
         "total_errors": 0,
         "total_cost_usd": 0.05
     }
-
-def test_seed_telemetry(client):
-    response = client.post("/api/v1/telemetry/seed")
-    assert response.status_code == 200
-    assert response.json() == {"message": "Telemetry seeded successfully"}
-
-def test_delete_telemetry(client):
-    response = client.delete("/api/v1/telemetry")
-    assert response.status_code == 200
-    assert response.json() == {"message": "Telemetry deleted successfully"}

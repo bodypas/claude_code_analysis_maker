@@ -1,6 +1,6 @@
 import csv
 from pathlib import Path
-from typing import Sequence, Dict, Set, Optional, List
+from typing import Dict, Set, Optional, List
 
 from loguru import logger
 from pydantic import ValidationError
@@ -26,9 +26,9 @@ class EmployeeService:
         locations: Optional[List[str]] = None,
         practices: Optional[List[str]] = None,
         search_query: Optional[str] = None
-    ) -> Sequence[Employee]:
+    ) -> List[EmployeeSchema]:
         """Retrieves employees via the repository, optionally applying filters."""
-        return await self.repository.get_filtered(
+        employees = await self.repository.get_filtered(
             skip=skip,
             limit=limit,
             levels=levels,
@@ -36,6 +36,7 @@ class EmployeeService:
             practices=practices,
             search_query=search_query
         )
+        return [EmployeeSchema.model_validate(e) for e in employees]
 
     async def analyze_employee_file(self, file_path: Path) -> Dict[str, Set[str]]:
         """Analyzes employee file schema."""

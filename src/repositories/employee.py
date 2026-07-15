@@ -1,4 +1,4 @@
-from typing import List, Optional, Sequence
+from typing import List, Optional
 
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,7 +21,7 @@ class EmployeeRepository(BaseRepository[Employee]):
         search_query: Optional[str] = None,
         skip: int = 0,
         limit: int = 100
-    ) -> Sequence[Employee]:
+    ) -> List[Employee]:
         """Retrieves a filtered and paginated list of employees."""
         stmt = select(self.model)
         if levels:
@@ -39,4 +39,4 @@ class EmployeeRepository(BaseRepository[Employee]):
             )
         stmt = stmt.offset(skip).limit(limit)
         result = await self.session.execute(stmt)
-        return result.scalars().all()
+        return list(result.scalars().all())

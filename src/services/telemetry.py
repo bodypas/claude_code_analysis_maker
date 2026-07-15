@@ -15,7 +15,16 @@ from src.models.events import (
 )
 from src.models.telemetry import TelemetryLog
 from src.repositories.telemetry import TelemetryRepository
-from src.schemas.telemetry import TelemetryLogSchema
+from src.schemas.telemetry import (
+    TelemetryLogSchema,
+    UsageOverviewSchema,
+    ActivityOverTimeSchema,
+    CostBreakdownSchema,
+    ToolUsageSchema,
+    ErrorAnalysisSchema,
+    TerminalBreakdownSchema,
+    EventDistributionSchema,
+)
 
 
 class TelemetryService:
@@ -24,25 +33,25 @@ class TelemetryService:
     def __init__(self, session: AsyncSession):
         self.repository = TelemetryRepository(session)
 
-    async def get_usage_overview(self) -> Dict[str, Any]:
+    async def get_usage_overview(self) -> UsageOverviewSchema:
         return await self.repository.get_usage_overview()
 
-    async def get_activity_over_time(self) -> Dict[str, List[Dict[str, Any]]]:
+    async def get_activity_over_time(self) -> List[ActivityOverTimeSchema]:
         return await self.repository.get_activity_over_time()
 
-    async def get_cost_breakdown(self) -> List[Dict[str, Any]]:
+    async def get_cost_breakdown(self) -> List[CostBreakdownSchema]:
         return await self.repository.get_cost_breakdown()
 
-    async def get_tool_usage(self) -> Dict[str, List[Dict[str, Any]]]:
+    async def get_tool_usage(self) -> ToolUsageSchema:
         return await self.repository.get_tool_usage()
 
-    async def get_error_analysis(self) -> List[Dict[str, Any]]:
+    async def get_error_analysis(self) -> List[ErrorAnalysisSchema]:
         return await self.repository.get_error_analysis()
 
-    async def get_terminal_breakdown(self) -> List[Dict[str, Any]]:
+    async def get_terminal_breakdown(self) -> List[TerminalBreakdownSchema]:
         return await self.repository.get_terminal_breakdown()
 
-    async def get_event_type_distribution(self) -> List[Dict[str, Any]]:
+    async def get_event_type_distribution(self) -> List[EventDistributionSchema]:
         return await self.repository.get_event_type_distribution()
 
     def _parse_event_base(self, log: TelemetryLog) -> Dict[str, Any]:

@@ -1,4 +1,4 @@
-from typing import List, Any, Dict
+from typing import List
 
 from sqlalchemy import select, func, cast, Integer, case, Date
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +12,17 @@ from src.models.events import (
 )
 from src.models.telemetry import TelemetryLog
 from src.repositories.base import BaseRepository
+from src.schemas.telemetry import (
+    UsageOverviewSchema,
+    ActivityOverTimeSchema,
+    CostBreakdownSchema,
+    ToolUsageSchema,
+    ToolResultStats,
+    ToolDecisionStats,
+    ErrorAnalysisSchema,
+    TerminalBreakdownSchema,
+    EventDistributionSchema,
+)
 
 
 class TelemetryRepository(BaseRepository[TelemetryLog]):
@@ -22,7 +33,7 @@ class TelemetryRepository(BaseRepository[TelemetryLog]):
 
     # --- Analytics Queries ---
 
-    async def get_usage_overview(self) -> Dict[str, Any]:
+    async def get_usage_overview(self) -> UsageOverviewSchema:
         prompts = await self.session.scalar(select(func.count()).select_from(UserPromptEvent))
         tools = await self.session.scalar(select(func.count()).select_from(ToolDecisionEvent))
         results = await self.session.scalar(select(func.count()).select_from(ToolResultEvent))
@@ -31,16 +42,16 @@ class TelemetryRepository(BaseRepository[TelemetryLog]):
         sessions = await self.session.scalar(select(func.count(func.distinct(TelemetryLog.attributes["session.id"]))).select_from(TelemetryLog))
         cost = await self.session.scalar(select(func.sum(ApiRequestEvent.cost_usd)).select_from(ApiRequestEvent))
         
-        return {
-            "total_prompts": prompts or 0,
-            "total_sessions": sessions or 0,
-            "total_tool_calls": (tools or 0) + (results or 0),
-            "total_api_requests": requests or 0,
-            "total_errors": errors or 0,
-            "total_cost_usd": float(cost or 0)
-        }
+        return UsageOverviewSchema(
+            total_prompts=prompts or 0,
+            total_sessions=sessions or 0,
+            total_tool_calls=(tools or 0) + (results or 0),
+            total_api_requests=requests or 0,
+            total_errors=errors or 0,
+            total_cost_usd=float(cost or 0)
+        )
 
-    async def get_activity_over_time(self) -> List[Dict[str, Any]]:
+    async def get_activity_over_time(self) -> List[ActivityOverTimeSchema]:
         # Query Prompts
         prompts_res = await self.session.execute(
             select(
@@ -68,15 +79,15 @@ class TelemetryRepository(BaseRepository[TelemetryLog]):
         all_days = sorted(set(prompt_map.keys()) | set(request_map.keys()))
 
         return [
-            {
-                "day": str(day),
-                "prompt_count": prompt_map.get(day, 0),
-                "request_count": request_map.get(day, 0),
-            }
+            ActivityOverTimeSchema(
+                day=str(day),
+                prompt_count=prompt_map.get(day, 0),
+                request_count=request_map.get(day, 0),
+            )
             for day in all_days
         ]
 
-    async def get_cost_breakdown(self) -> List[Dict[str, Any]]:
+    async def get_cost_breakdown(self) -> List[CostBreakdownSchema]:
         stmt = select(
             ApiRequestEvent.model,
             func.sum(ApiRequestEvent.cost_usd).label("cost"),
@@ -84,9 +95,17 @@ class TelemetryRepository(BaseRepository[TelemetryLog]):
             func.sum(ApiRequestEvent.output_tokens).label("output_tokens")
         ).group_by(ApiRequestEvent.model)
         result = await self.session.execute(stmt)
-        return [{"model": r.model, "cost": r.cost or 0, "input_tokens": r.input_tokens or 0, "output_tokens": r.output_tokens or 0} for r in result.all()]
+        return [
+            CostBreakdownSchema(
+                model=r.model, 
+                cost=r.cost or 0, 
+                input_tokens=r.input_tokens or 0, 
+                output_tokens=r.output_tokens or 0
+            ) 
+            for r in result.all()
+        ]
 
-    async def get_tool_usage(self) -> Dict[str, List[Dict[str, Any]]]:
+    async def get_tool_usage(self) -> ToolUsageSchema:
         results = await self.session.execute(
             select(
                 ToolResultEvent.tool_name,
@@ -101,9 +120,13 @@ class TelemetryRepository(BaseRepository[TelemetryLog]):
                 func.sum(case((ToolDecisionEvent.decision == 'reject', 1), else_=0)).label("rejects")
             ).group_by(ToolDecisionEvent.tool_name)
         )
-        return {"results": [r._asdict() for r in results.all()], "decisions": [d._asdict() for d in decisions.all()]}
+        
+        return ToolUsageSchema(
+            results=[ToolResultStats(**r._asdict()) for r in results.all()],
+            decisions=[ToolDecisionStats(**d._asdict()) for d in decisions.all()]
+        )
 
-    async def get_error_analysis(self) -> List[Dict[str, Any]]:
+    async def get_error_analysis(self) -> List[ErrorAnalysisSchema]:
         stmt = select(
             ApiErrorEvent.model,
             ApiErrorEvent.error,
@@ -111,24 +134,24 @@ class TelemetryRepository(BaseRepository[TelemetryLog]):
             func.avg(ApiErrorEvent.attempt).label("avg_attempts")
         ).group_by(ApiErrorEvent.model, ApiErrorEvent.error)
         result = await self.session.execute(stmt)
-        return [r._asdict() for r in result.all()]
+        return [ErrorAnalysisSchema(**r._asdict()) for r in result.all()]
 
-    async def get_terminal_breakdown(self) -> List[Dict[str, Any]]:
+    async def get_terminal_breakdown(self) -> List[TerminalBreakdownSchema]:
         stmt = select(
             UserPromptEvent.terminal_type,
             func.count().label("count")
         ).group_by(UserPromptEvent.terminal_type)
         result = await self.session.execute(stmt)
-        return [r._asdict() for r in result.all()]
+        return [TerminalBreakdownSchema(**r._asdict()) for r in result.all()]
 
-    async def get_event_type_distribution(self) -> List[Dict[str, Any]]:
+    async def get_event_type_distribution(self) -> List[EventDistributionSchema]:
         """Counts records across all event tables for distribution analysis."""
         
         counts = [
-            {"event_type": "User Prompt", "count": await self.session.scalar(select(func.count()).select_from(UserPromptEvent))},
-            {"event_type": "Tool Decision", "count": await self.session.scalar(select(func.count()).select_from(ToolDecisionEvent))},
-            {"event_type": "Tool Result", "count": await self.session.scalar(select(func.count()).select_from(ToolResultEvent))},
-            {"event_type": "API Request", "count": await self.session.scalar(select(func.count()).select_from(ApiRequestEvent))},
-            {"event_type": "API Error", "count": await self.session.scalar(select(func.count()).select_from(ApiErrorEvent))},
+            EventDistributionSchema(event_type="User Prompt", count=await self.session.scalar(select(func.count()).select_from(UserPromptEvent)) or 0),
+            EventDistributionSchema(event_type="Tool Decision", count=await self.session.scalar(select(func.count()).select_from(ToolDecisionEvent)) or 0),
+            EventDistributionSchema(event_type="Tool Result", count=await self.session.scalar(select(func.count()).select_from(ToolResultEvent)) or 0),
+            EventDistributionSchema(event_type="API Request", count=await self.session.scalar(select(func.count()).select_from(ApiRequestEvent)) or 0),
+            EventDistributionSchema(event_type="API Error", count=await self.session.scalar(select(func.count()).select_from(ApiErrorEvent)) or 0),
         ]
         return counts
