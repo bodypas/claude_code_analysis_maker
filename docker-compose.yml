@@ -25,6 +25,8 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    volumes:
+      - data_volume:/app/data/output
     depends_on:
       db:
         condition: service_healthy
@@ -38,6 +40,8 @@ services:
     command: ["python", "-m", "src.tools.seed_db"]
     env_file:
       - .env
+    volumes:
+      - data_volume:/app/data/output
     depends_on:
       db:
         condition: service_healthy
@@ -55,3 +59,4 @@ services:
 
 volumes:
   postgres_data:
+  data_volume:
