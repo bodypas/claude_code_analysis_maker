@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from loguru import logger
-
+import uvicorn
 from src.api.router import api_router
 from src.db.connection import init_db
 
@@ -38,5 +38,4 @@ app.include_router(api_router, prefix="/api/v1")
 
 
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
